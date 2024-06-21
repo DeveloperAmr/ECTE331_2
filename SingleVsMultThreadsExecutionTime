@@ -1,0 +1,101 @@
+import java.awt.image.BufferedImage;
+
+public class SingleVsMultThreadsExecutionTime {
+
+    public static void main(String[] args) throws InterruptedException {
+        String templateImagePath = "OneG.jpg";
+        String sourceImagePath = "TenCardG.jpg";
+        
+        // Read images
+        BufferedImage templateImage = RdWrImg.readImage(templateImagePath);
+        BufferedImage sourceImage = RdWrImg.readImage(sourceImagePath);
+
+        // Single-thread execution
+        long startTime = System.nanoTime();
+        templateMatchingSingleThread(templateImage, sourceImage);
+        long endTime = System.nanoTime();
+        long durationSingle = (endTime - startTime) / 1000000; // Convert to milliseconds
+
+        System.out.println("Single-thread execution time: " + durationSingle + " ms");
+
+        // Multi-thread execution with different number of threads
+        int[] threadCounts = {2, 4, 8};
+        for (int numOfThreads : threadCounts) {
+            startTime = System.nanoTime();
+            templateMatchingMultiThread(templateImage, sourceImage, numOfThreads);
+            endTime = System.nanoTime();
+            long durationMulti = (endTime - startTime) / 1000000; // Convert to milliseconds
+
+            System.out.println("Multi-thread execution time with " + numOfThreads + " threads: " + durationMulti + " ms");
+        }
+    }
+
+    public static void templateMatchingSingleThread(BufferedImage templateImage, BufferedImage sourceImage) {
+        int r1 = sourceImage.getHeight();
+        int c1 = sourceImage.getWidth();
+        int r2 = templateImage.getHeight();
+        int c2 = templateImage.getWidth();
+        int tempSize = r2 * c2;
+        int minimum = Integer.MAX_VALUE;
+        int[][] absDiffMat = new int[r1 - r2 + 1][c1 - c2 + 1];
+
+        for (int i = 0; i <= r1 - r2; i++) {
+            for (int j = 0; j <= c1 - c2; j++) {
+                int absDiff = 0;
+                for (int m = 0; m < r2; m++) {
+                    for (int n = 0; n < c2; n++) {
+                        int sourcePixel = sourceImage.getRGB(j + n, i + m) & 0xFF;
+                        int templatePixel = templateImage.getRGB(n, m) & 0xFF;
+                        absDiff += Math.abs(sourcePixel - templatePixel);
+                    }
+                }
+                absDiff /= tempSize;
+                absDiffMat[i][j] = absDiff;
+                if (absDiff < minimum) {
+                    minimum = absDiff;
+                }
+            }
+        }
+
+        // Threshold and drawing rectangles code can be added here.
+    }
+
+    public static void templateMatchingMultiThread(BufferedImage templateImage, BufferedImage sourceImage, int numOfThreads) throws InterruptedException {
+        int r1 = sourceImage.getHeight();
+        int c1 = sourceImage.getWidth();
+        int r2 = templateImage.getHeight();
+        int c2 = templateImage.getWidth();
+        int tempSize = r2 * c2;
+        int rowsPerThread = (r1 - r2 + 1) / numOfThreads;
+        int[][] absDiffMat = new int[r1 - r2 + 1][c1 - c2 + 1];
+
+        Thread[] threads = new Thread[numOfThreads];
+        for (int t = 0; t < numOfThreads; t++) {
+            final int startRow = t * rowsPerThread;
+            final int endRow = (t == numOfThreads - 1) ? (r1 - r2 + 1) : (startRow + rowsPerThread);
+            threads[t] = new Thread(() -> {
+                for (int i = startRow; i < endRow; i++) {
+                    for (int j = 0; j <= c1 - c2; j++) {
+                        int absDiff = 0;
+                        for (int m = 0; m < r2; m++) {
+                            for (int n = 0; n < c2; n++) {
+                                int sourcePixel = sourceImage.getRGB(j + n, i + m) & 0xFF;
+                                int templatePixel = templateImage.getRGB(n, m) & 0xFF;
+                                absDiff += Math.abs(sourcePixel - templatePixel);
+                            }
+                        }
+                        absDiff /= tempSize;
+                        absDiffMat[i][j] = absDiff;
+                    }
+                }
+            });
+            threads[t].start();
+        }
+
+        for (Thread thread : threads) {
+            thread.join();
+        }
+
+        // Threshold and drawing rectangles code can be added here.
+    }
+}
