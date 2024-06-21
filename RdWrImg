@@ -1,0 +1,30 @@
+import java.awt.image.BufferedImage;
+import java.io.File;
+import javax.imageio.ImageIO;
+import java.io.IOException;
+
+public class RdWrImg {
+
+    public static BufferedImage readImage(String filePath) {
+        BufferedImage img = null;
+        try {
+            img = ImageIO.read(new File(filePath));
+            if (img == null) {
+                System.out.println("The image file " + filePath + " could not be read.");
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading the image file: " + filePath);
+            e.printStackTrace();
+        }
+        return img;
+    }
+
+    public static void writeImage(BufferedImage img, String filePath) {
+        try {
+            ImageIO.write(img, "jpg", new File(filePath));
+        } catch (IOException e) {
+            System.out.println("Error writing the image file: " + filePath);
+            e.printStackTrace();
+        }
+    }
+}
