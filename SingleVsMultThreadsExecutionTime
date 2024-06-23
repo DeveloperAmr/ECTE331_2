@@ -3,7 +3,7 @@ import java.awt.image.BufferedImage;
 public class SingleVsMultThreadsExecutionTime {
 
     public static void main(String[] args) throws InterruptedException {
-        String templateImagePath = "OneG.jpg";
+        String templateImagePath = "Template.jpg";
         String sourceImagePath = "TenCardG.jpg";
         
         // Read images
