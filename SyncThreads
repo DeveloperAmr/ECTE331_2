@@ -1,0 +1,72 @@
+package projectone;
+
+public class SyncThreads {
+
+    private static int A1, A2, A3;
+    private static int B1, B2, B3;
+    private static final Object lock = new Object();
+
+    public static void main(String[] args) {
+        Runnable taskA = () -> {
+            synchronized (lock) {
+                A1 = Utility.sum(500);
+                lock.notifyAll();
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                A2 = B2 + Utility.sum(300);
+                lock.notifyAll();
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                A3 = B3 + Utility.sum(400);
+                lock.notifyAll();
+            }
+        };
+
+        Runnable taskB = () -> {
+            synchronized (lock) {
+                B1 = Utility.sum(250);
+                lock.notifyAll();
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                B2 = A1 + Utility.sum(200);
+                lock.notifyAll();
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                B3 = A2 + Utility.sum(400);
+                lock.notifyAll();
+            }
+        };
+
+        Thread threadA = new Thread(taskA);
+        Thread threadB = new Thread(taskB);
+
+        threadA.start();
+        threadB.start();
+
+        try {
+            threadA.join();
+            threadB.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("A1: " + A1);
+        System.out.println("B1: " + B1);
+        System.out.println("A2: " + A2);
+        System.out.println("B2: " + B2);
+        System.out.println("A3: " + A3);
+        System.out.println("B3: " + B3);
+    }
+}
